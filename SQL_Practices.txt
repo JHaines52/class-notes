@@ -1,0 +1,353 @@
+Basic Joins
+
+USE AP
+
+PQFR
+
+	-- Inner join does a 1-1 match where the data matches. only records in both 
+
+SELECT VendorName, DefaultTermsID
+FROM Vendors
+    /* INNER JOIN
+		terms 
+			ON - use the keyword ON*/
+
+SELECT *
+FROM Terms 
+
+SELECT VendorName, TermsDescription
+FROM Vendors
+	INNER JOIN Terms -- INNER JOINS can be written as JOIN
+			ON DefaultTermsID = TermsID
+
+
+
+SELECT Vendors.VendorID, Invoices.VendorID --Joins you should specify what table you want the information from 
+From Vendors INNER JOIN Invoices ON Vendors.VendorID = INvoices.VendorID
+WHERE InvoiceTotal > 100 
+
+SELECT Vendors.VendorID, Invoices.VendorID, VendorName, Invoices.InvoiceID, InvoiceTotal, InvoiceDate -- The more Joins the more you will have to use the format table.table_column
+FROM Vendors 
+	INNER JOIN Invoices ON Vendors.VendorID = Invoices.VendorID
+		INNER JOIN InvoiceLineItems ON Invoices.InvoiceID = InvoiceLineItems.InvoiceID
+
+SELECT Vendors.VendorID, Inv.VendorID, VendorName, Inv.InvoiceID, InvoiceTotal, InvoiceDate -- The more Joins the more you will have to use the format table.table_column
+FROM Vendors 
+	INNER JOIN Invoices AS inv ON Vendors.VendorID = Inv.VendorID
+		INNER JOIN InvoiceLineItems AS il ON Inv.InvoiceID = il.InvoiceID
+
+-- INNER returns 114
+
+SELECT Vendors.VendorID, Invoices.VendorID, VendorName, InvoiceID, InvoiceTotal, InvoiceDate
+FROM Vendors LEFT OUTER JOIN Invoices ON Vendors.VendorID = Invoices.VendorID
+
+-- LEFT returns 202, must have vendors (122) with no orders 
+
+
+	-- Outer joins all records from one table and only matching records from 2nd table
+
+SELECT VendorName, TermsDescription
+FROM Vendors
+	LEFT OUTER JOIN Terms -- LEFT OUTER JOIN can be written as LEFT JOIN
+			ON DefaultTermsID = TermsID
+
+SELECT Vendors.VendorID, Invoices.VendorID
+From Vendors LEFT JOIN Invoices ON Vendors.VendorID = INvoices.VendorID
+WHERE Invoices.VendorID IS NULL
+
+
+SELECT Vendors.VendorName, Terms.TermsDescription, Invoices.InvoiceID
+FROM   Invoices INNER JOIN
+             Terms ON Invoices.TermsID = Terms.TermsID INNER JOIN
+             Vendors ON Invoices.VendorID = Vendors.VendorID AND Terms.TermsID = Vendors.DefaultTermsID
+
+SELECT Vendors.VendorName, Terms.TermsDescription, Invoices.InvoiceID
+FROM Vendors INNER JOIN
+		Terms ON Vendors.DefaultTermsID = terms.TermsID INNER JOIN
+		Invoices ON vendors.VendorID = Invoices.VendorID AND Terms.TermsID = Vendors.DefaultTermsID 
+
+--CROSS JOIN 
+
+SELECT VendorName, TermsDescription
+FROM Vendors CROSS JOIN Terms
+ORDER BY VendorName
+
+SELECT *
+FROM Vendors
+
+SELECT V1.VendorContactFName, V2.VendorContactLName
+FROM Vendors AS V1
+  CROSS JOIN Vendors AS V2 -- to cross reference columns in the same table you have to create an alias 
+	
+		
+USE AP
+
+SELECT Count(*) AS HowManyVendors
+FROM Vendors
+
+SELECT COUNT(*) - COUNT(VendorPhone) AS HowManyVendors
+FROM Vendors
+
+SELECT COUNT(*)
+FROM Vendors
+WHERE VendorPhone IS NULL
+
+SELECT *
+FROM Vendors
+
+SELECT COUNT(*), MIN( LEN(VendorName) )
+FROM Vendors
+WHERE VendorPhone IS NULL
+
+/*Aggregates COUNT, SUM, AVG, MAX, MIN -Used in a Function-
+anything you can do with a WHERE CLAUSES you can do with AGGREGATES*/
+
+SELECT *
+FROM Invoices
+
+
+
+SELECT COUNT(*), SUM( InvoiceTotal ), AVG( InvoiceTotal)  
+FROM Invoices
+
+SELECT  VendorID, COUNT(*) AS CountByVendor, SUM(InvoiceTotal ) AS SumByVendor
+FROM Invoices
+GROUP BY VendorID
+
+
+
+SELECT COUNT(VendorState)AS EachState
+FROM Vendors
+GROUP BY VendorState
+
+SELECT VendorState, COUNT(*) AS VendorsInState
+FROM Vendors
+GROUP BY VendorName, VendorState
+ORDER BY VendorsInState
+
+--AGGREGATES WITH SUM GIVES A TOTAL 
+SELECT SUM(InvoiceTotal)
+FROM Invoices
+
+-- AGGREGATES WITH GROUP BY GIVE SUB-TOTALS 
+SELECT VendorID, SUM(InvoiceTotal)
+FROM Invoices
+GROUP BY VendorID
+
+-- ROUND DOWN IS FLOOR, ROUND UP IS CEILING 
+SELECT InvoiceTotal, ROUND( InvoiceTotal, -1 )
+FROM Invoices
+
+SELECT VendorID, SUM( ROUND(InvoiceTotal, 1) ) --ROUNDS THE NUMBER THEN SUMS THE ROUNDED NUMBERS 
+FROM Invoices
+GROUP BY VendorID
+
+SELECT VendorID, ROUND(SUM(InvoiceTotal),0) -- THIS SUMS UP THEN ROUNDS THE TOTAL 
+FROM Invoices
+GROUP BY VendorID
+
+--ORDER BY AND HAVING
+
+SELECT VendorID, SUM(InvoiceTotal) AS TotalByVendor
+FROM Invoices
+--WHERE FILTERS BY ROWS/INDIVIDUAL INVOICES
+GROUP BY VendorID -- CREATES BINS
+HAVING SUM(InvoiceTotal) > 1000
+ORDER BY TotalByVendor DESC
+
+
+
+SELECT VendorID, COUNT(*) AS HowMany, SUM(InvoiceTotal) AS TotalByVendor
+FROM Invoices
+WHERE InvoiceTotal > 100 --WHERE FILTERS BY ROWS/INDIVIDUAL INVOICES
+GROUP BY VendorID -- CREATES BINS
+HAVING SUM(InvoiceTotal) > 1000 AND COUNT(*)>1
+ORDER BY TotalByVendor DESC
+
+
+SELECT VendorID, SUM(PaymentTotal), COUNT(*), AVG(TermsID)
+FROM Invoices
+GROUP BY VendorID, TermsID --IF YOU ADD A GROUP BY THEN YOU HAVE TO ADD AN AGGREGATE OR TO THE GROUP BY TO SELECT A COLUMN
+ORDER BY VendorID
+
+SELECT Vendors.VendorID, Vendors.VendorName, SUM(PaymentTotal) AS PayTotal, COUNT(*) AS Results
+FROM Invoices
+	JOIN Vendors	
+		ON Invoices.VendorID = Vendors.VendorID
+GROUP BY Vendors.VendorID, VendorName
+
+
+SELECT Vendors.VendorID, Vendors.VendorName, SUM(PaymentTotal) AS VendorTotal
+FROM Invoices
+	JOIN Vendors	
+		ON Invoices.VendorID = Vendors.VendorID
+WHERE VendorState = 'CA'
+GROUP BY Vendors.VendorID, Vendors.VendorName --GROUP BY ONLY HAS 2 GROUPS TO LIST BY AND LIST BY FUNCTION
+HAVING SUM (InvoiceTotal) > 1000
+
+--SUBQUERIES CAN BE USED TO NOT HAVE TO WRITE AN INCREDIBLY LONG QUERY 
+
+SELECT InvoiceID, InvoiceTotal, VendorName, VendorState
+FROM (SELECT * 
+		FROM Invoices) AS ImportantInvoices
+JOIN
+	(SELECT VendorID, VendorName, VendorState
+		FROM Vendors
+		WHERE VendorState = 'CA') AS CaVendors
+ON ImportantInvoices.VendorID = CaVendors.VendorID
+
+
+SELECT	InvoiceNumber, InvoiceDate, InvoiceTotal 
+FROM Invoices
+WHERE InvoiceTotal > (SELECT AVG(InvoiceTotal) FROM Invoices)
+ORDER BY InvoiceTotal;
+
+SELECT InvoiceNumber, InvoiceDate, InvoiceTotal
+FROM Invoices i
+JOIN Vendors v
+On i.VendorID = v.VendorID
+WHERE VendorState = 'CA'
+ORDER BY InvoiceDate;
+
+SELECT InvoiceNumber, InvoiceDate, InvoiceTotal
+FROM Invoices 
+WHERE VendorID IN
+	(SELECT VendorID
+	FROM Vendors
+	WHERE VendorState = 'CA')
+ORDER BY InvoiceDate;
+
+CREATE VIEW 
+
+
+SELECT VendorID, InvoiceNumber, InvoiceTotal
+FROM Invoices AS Inv_Main 
+WHERE InvoiceTotal > 
+(SELECT AVG(InvoiceTotal)
+FROM Invoices AS Inv_Sub
+WHERE Inv_sub.VendorID =
+Inv_Main.VendorID)
+ORDER BY VendorID, InvoiceTotal
+
+UPDATE Invoices SET TermsID = 2 
+--SELECT * FROM Invoices
+WHERE VendorID = (SELECT VendorID FROM Vendors
+WHERE VendorName = 'Pacific Bell')
+
+UPDATE Invoices 
+SET TermsID = 1 
+--SELECT *
+FROM Invoices i JOIN Vendors v
+ON i.VendorID = v.VendorID WHERE VendorName = 'Pacific Bell';
+
+
+--COMMON TABLE EXPRESSION (CTE) -is a subquery
+
+WITH Summary AS (
+SELECT VendorState, VendorName, SUM(InvoiceTotal) AS SumOfInvoices FROM Invoices i JOIN Vendors v
+ON i.VendorID = v.VendorID GROUP BY VendorState, VendorName
+),
+TopInState AS (
+SELECT VendorState, MAX(SumOfInvoices) AS SumOfInvoices FROM Summary
+GROUP BY VendorState )
+SELECT s.VendorState, s.VendorName, t.SumOfInvoices FROM Summary s
+JOIN TopInState t
+ON s.VendorState = t.VendorState AND s.SumOfInvoices = t.SumOfInvoices
+ORDER BY s.VendorState;
+
+--INSERT MUST ASSIGN A VALUE TO COULMNS THAT ARE NOT NULL
+
+SELECT * FROM Vendors
+
+INSERT INTO Vendors
+   (VendorName, VendorCity, VendorState, VendorZipCode, DefaultTermsID, DefaultAccountNo )
+   VALUES 
+   ( 'Cool Toys', 'Milford', 'OH', '45150', 1, 540 )
+
+   INSERT INTO Vendors
+   VALUES ('More Toys', '120 Eagles Street', NULL, 'Lovenland', 'OH', '45140', NULL, NULL, 'George', 1, 570)
+
+   UPDATE Invoices
+   SET InvoiceTotal = InvoiceTotal * 1.1
+   WHERE VendorID = 123; 
+
+--DELETE 
+
+DELETE FROM Invoices
+--SELECT * FROM Invoices
+WHERE InvoiceID = 49
+
+USE AP
+
+SELECT COUNT (*) FROM Vendors --122;
+SELECT COUNT (*) FROM Terms; -- 5
+SELECT COUNT (*) FROM Invoices; --114
+SELECT COUNT (*) FROM InvoiceLineItems; --118
+SELECT COUNT (*) FROM InvoiceArchive; --0
+SELECT COUNT (*) FROM GLAccounts; --75
+SELECT COUNT (*) FROM ContactUpdates; -- 8
+
+SELECT COUNT (*) FROM Vendors
+WHERE VendorState = 'CA' --75
+
+SELECT COUNT (*) FROM Vendors
+WHERE NOT VendorState = 'CA' --47
+
+
+SELECT TOP 10 VendorID FROM Vendors
+
+SELECT InvoiceNumber, InvoiceDate invoiceTotal
+FROM Invoices
+WHERE InvoiceDate BETWEEN '2023-01-01' AND '2023-03-31'
+ORDER BY InvoiceDate
+
+--SELECT InvoiceID, InvoiceTotal, InvoiceTotal * .5 AS DiscountTotal FROM Invoices
+
+SELECT VendorName, VendorContactFName + ' ' + VendorContactLName AS Contacts FROM Vendors;
+SELECT VendorNAme, CONCAT ( VendorContactFName, ' ', VendorContactLName ) AS Contacts From Vendors;
+
+--SELECT GETDATE()
+
+SELECT DATEDIFF( DAY, GETDATE(), InvoiceDate ) FROM Invoices;
+
+SELECT 'Hello' + ' ' + VendorContactFName From Vendors 
+
+SELECT VendorAddress1, VendorCity, VendorState FROM Vendors
+
+SELECT CONCAT (VendorAddress1, ', ' , VendorCity, ' ', VendorState) AS Addresses FROM Vendors;
+
+SELECT * FROM Vendors
+WHERE (VendorState = 'OH' OR VendorState = 'CA') AND DefaultTermsID = 2
+
+SELECT VendorContactLName, VendorContactFName,
+LEFT( VendorContactLName, 1) + LEFT( VendorContactFName, 1)AS Inital 
+FROM Vendors
+
+SELECT VendorName,
+       VendorPhone, 
+       SUBSTRING(VendorPhone, 2, 3) AS Area_code
+From Vendors
+
+SELECT VendorName, RIGHT ( LEFT( VendorName, 3 ) ,1), 
+       REVERSE ( VendorName ) 
+From Vendors
+
+SELECT DISTINCT  VendorState, VendorContactLName 
+FROM Vendors 
+ORDER BY VendorContactLName DESC
+
+SELECT VendorState, COUNT(*)
+FROM Vendors
+GROUP BY VendorState
+ORDER BY VendorState ASC 
+
+
+SELECT DISTINCT DefaultTermsID FROM Vendors
+
+SELECT TOP 10 WITH TIES * 
+FROM Vendors
+ORDER BY VendorState, VendorCIty
+
+SELECT * 
+FROM Vendors
+ORDER BY VendorState OFFSET 5 ROWS FETCH FIRST 5 ROW ONLY 
