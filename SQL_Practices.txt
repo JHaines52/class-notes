@@ -1,85 +1,228 @@
-Basic Joins
+*DAY 1 NOTES*
+
+SELECT Vendors.VendorName, Invoices.InvoiceID, Invoices.InvoiceDate, Invoices.InvoiceTotal
+FROM   Invoices INNER JOIN
+             Vendors ON Invoices.VendorID = Vendors.VendorID
+
+SELECT Vendors.VendorName, Invoices.VendorID, Invoices.InvoiceID, Invoices.InvoiceDate, Invoices.InvoiceTotal, Vendors.VendorID AS Expr1
+FROM   Invoices INNER JOIN
+             Vendors ON Invoices.VendorID = Vendors.VendorID
+
+*DAY 2 NOTE*
 
 USE AP
 
-PQFR
+SELECT COUNT (*) FROM Vendors --122;
+SELECT COUNT (*) FROM Terms; -- 5
+SELECT COUNT (*) FROM Invoices; --114
+SELECT COUNT (*) FROM InvoiceLineItems; --118
+SELECT COUNT (*) FROM InvoiceArchive; --0
+SELECT COUNT (*) FROM GLAccounts; --75
+SELECT COUNT (*) FROM ContactUpdates; -- 8
 
-	-- Inner join does a 1-1 match where the data matches. only records in both 
+SELECT COUNT (*) FROM Vendors
+WHERE VendorState = 'CA' --75
 
-SELECT VendorName, DefaultTermsID
+SELECT COUNT (*) FROM Vendors
+WHERE NOT VendorState = 'CA' --47
+
+
+SELECT TOP 10 VendorID FROM Vendors
+
+SELECT InvoiceNumber, InvoiceDate invoiceTotal
+FROM Invoices
+WHERE InvoiceDate BETWEEN '2023-01-01' AND '2023-03-31'
+ORDER BY InvoiceDate
+
+--SELECT InvoiceID, InvoiceTotal, InvoiceTotal * .5 AS DiscountTotal FROM Invoices
+
+SELECT VendorName, VendorContactFName + ' ' + VendorContactLName AS Contacts FROM Vendors;
+SELECT VendorNAme, CONCAT ( VendorContactFName, ' ', VendorContactLName ) AS Contacts From Vendors;
+
+--SELECT GETDATE()
+
+SELECT DATEDIFF( DAY, GETDATE(), InvoiceDate ) FROM Invoices;
+
+SELECT 'Hello' + ' ' + VendorContactFName From Vendors 
+
+SELECT VendorAddress1, VendorCity, VendorState FROM Vendors
+
+SELECT CONCAT (VendorAddress1, ', ' , VendorCity, ' ', VendorState) AS Addresses FROM Vendors;
+
+SELECT * FROM Vendors
+WHERE (VendorState = 'OH' OR VendorState = 'CA') AND DefaultTermsID = 2
+
+SELECT VendorContactLName, VendorContactFName,
+LEFT( VendorContactLName, 1) + LEFT( VendorContactFName, 1)AS Inital 
 FROM Vendors
-    /* INNER JOIN
-		terms 
-			ON - use the keyword ON*/
+
+SELECT VendorName,
+       VendorPhone, 
+       SUBSTRING(VendorPhone, 2, 3) AS Area_code
+From Vendors
+
+SELECT VendorName, RIGHT ( LEFT( VendorName, 3 ) ,1), 
+       REVERSE ( VendorName ) 
+From Vendors
+
+SELECT DISTINCT  VendorState, VendorContactLName 
+FROM Vendors 
+ORDER BY VendorContactLName DESC
+
+SELECT VendorState, COUNT(*)
+FROM Vendors
+GROUP BY VendorState
+ORDER BY VendorState ASC 
+
+
+SELECT DISTINCT DefaultTermsID FROM Vendors
+
+SELECT TOP 10 WITH TIES * 
+FROM Vendors
+ORDER BY VendorState, VendorCIty
+
+SELECT * 
+FROM Vendors
+ORDER BY VendorState OFFSET 5 ROWS FETCH FIRST 5 ROW ONLY 
+
+*DAY 3 NOTES*
+
+USE AP
+
+PQFR --Put in to Prevent Queue From Running
+
+--Homework Question 1
+SELECT AccountNo FROM GLAccounts
+WHERE (AccountDescription = 'Freight') --553;
+
+
+--Homework Question 2
+SELECT InvoiceID, InvoiceLineItemDescription, InvoiceLineItemAmount 
+FROM InvoiceLineItems
+WHERE AccountNo = 553 AND InvoiceLineItemDescription = 'Freight';
+
+
+--Homework Question 3
+SELECT AccountNo, AccountDescription
+FROM GLAccounts
+ORDER BY AccountDescription;
+
+--Homework Question 4
+SELECT *
+FROM Invoices
+ORDER BY InvoiceDueDate DESC;
+
+
+--Homework Question 5
+SELECT VendorName, VendorPhone, SUBSTRING(VendorPhone,2,3)
+FROM Vendors
+
+--Also
+
+SELECT VendorName, VendorPhone, LEFT( RIGHT(VendorPhone,13), 3) 
+FROM Vendors
+
+SELECT VendorName, VendorPhone, REPLACE( LEFT(VendorPhone,4), '(', '')
+FROM Vendors
+
+--Homework Question 6
+SELECT DISTINCT VendorState 
+FROM Vendors;
+
+--Also
+
+SELECT VendorState 
+FROM Vendors
+GROUP BY VendorState; -- ANSI standard
+
+SELECT VendorState 
+FROM Vendors
+
+
+--Homework Question 7 
+
+SELECT COUNT(*) 
+FROM Vendors
+WHERE VendorState = 'CA'
+
+--Homework Question 8 
+
+SELECT COUNT(*) 
+FROM Vendors
+WHERE VendorState = 'CA' OR VendorState = 'OH'
+
+--Homework Question 9
+
+SELECT COUNT(*) 
+FROM Vendors
+WHERE VendorState = 'CA' AND VendorState = 'OH'
+--         true          AND    false
+
+--Homework Question 10
+
+SELECT VendorName
+FROM Vendors
+WHERE VendorName LIKE '% data %'  -- * most common wildcard!
+	OR VendorName LIKE '% data'
+	OR VendorName LIKE 'data %'
+
+
+--Another example of a wildcard
+SELECT VendorName
+From Vendors
+WHERE VendorName LIKE 'Da_a %'
+
+SELECT VendorName
+From Vendors
+WHERE VendorName LIKE 'Da[a-z]a %'
+
+--Examples for writing NULL
+SELECT * 
+FROM Vendors
+WHERE VendorPhone IS NULL --IS is necessary to run for NULL
 
 SELECT *
-FROM Terms 
-
-SELECT VendorName, TermsDescription
 FROM Vendors
-	INNER JOIN Terms -- INNER JOINS can be written as JOIN
-			ON DefaultTermsID = TermsID
+WHERE VendorPhone IS NOT NULL --Find things that are not NULL 
 
-
-
-SELECT Vendors.VendorID, Invoices.VendorID --Joins you should specify what table you want the information from 
-From Vendors INNER JOIN Invoices ON Vendors.VendorID = INvoices.VendorID
-WHERE InvoiceTotal > 100 
-
-SELECT Vendors.VendorID, Invoices.VendorID, VendorName, Invoices.InvoiceID, InvoiceTotal, InvoiceDate -- The more Joins the more you will have to use the format table.table_column
-FROM Vendors 
-	INNER JOIN Invoices ON Vendors.VendorID = Invoices.VendorID
-		INNER JOIN InvoiceLineItems ON Invoices.InvoiceID = InvoiceLineItems.InvoiceID
-
-SELECT Vendors.VendorID, Inv.VendorID, VendorName, Inv.InvoiceID, InvoiceTotal, InvoiceDate -- The more Joins the more you will have to use the format table.table_column
-FROM Vendors 
-	INNER JOIN Invoices AS inv ON Vendors.VendorID = Inv.VendorID
-		INNER JOIN InvoiceLineItems AS il ON Inv.InvoiceID = il.InvoiceID
-
--- INNER returns 114
-
-SELECT Vendors.VendorID, Invoices.VendorID, VendorName, InvoiceID, InvoiceTotal, InvoiceDate
-FROM Vendors LEFT OUTER JOIN Invoices ON Vendors.VendorID = Invoices.VendorID
-
--- LEFT returns 202, must have vendors (122) with no orders 
-
-
-	-- Outer joins all records from one table and only matching records from 2nd table
-
-SELECT VendorName, TermsDescription
+SELECT VendorName + ' ' + ISNULL( VendorPhone, 'NOT VALID' )
 FROM Vendors
-	LEFT OUTER JOIN Terms -- LEFT OUTER JOIN can be written as LEFT JOIN
-			ON DefaultTermsID = TermsID
 
-SELECT Vendors.VendorID, Invoices.VendorID
-From Vendors LEFT JOIN Invoices ON Vendors.VendorID = INvoices.VendorID
-WHERE Invoices.VendorID IS NULL
+SELECT VendorName + ' ' + COALESCE( VendorPhone, 'INVALID' )
+FROM Vendors
+
+--Homework Question 11 
 
 
-SELECT Vendors.VendorName, Terms.TermsDescription, Invoices.InvoiceID
-FROM   Invoices INNER JOIN
-             Terms ON Invoices.TermsID = Terms.TermsID INNER JOIN
-             Vendors ON Invoices.VendorID = Vendors.VendorID AND Terms.TermsID = Vendors.DefaultTermsID
+--Homework Question 12 
 
-SELECT Vendors.VendorName, Terms.TermsDescription, Invoices.InvoiceID
-FROM Vendors INNER JOIN
-		Terms ON Vendors.DefaultTermsID = terms.TermsID INNER JOIN
-		Invoices ON vendors.VendorID = Invoices.VendorID AND Terms.TermsID = Vendors.DefaultTermsID 
+--Homework Question 13 
 
---CROSS JOIN 
+--Homewokr Question 14
 
-SELECT VendorName, TermsDescription
-FROM Vendors CROSS JOIN Terms
-ORDER BY VendorName
+--Valid AND Statements
+SELECT *
+FROM Invoices
+WHERE InvoiceTotal > 50 AND InvoiceTotal < 95  --Exclusive
+
+SELECT *
+FROM Invoices
+WHERE InvoiceTotal BETWEEN 50 AND 95 --Inclusive
+
+SELECT * 
+FROM Vendors
+WHERE VendorState = 'OH'
+	OR	VendorState = 'CA'
+	OR	VendorState = 'KY'
+	OR	VendorState = 'VA'
+	OR	VendorState = 'WA'
 
 SELECT *
 FROM Vendors
+WHERE VendorState in('OH', 'CA', 'KY','VA','WA')
 
-SELECT V1.VendorContactFName, V2.VendorContactLName
-FROM Vendors AS V1
-  CROSS JOIN Vendors AS V2 -- to cross reference columns in the same table you have to create an alias 
-	
-		
+*DAY 4 NOTES*
+
 USE AP
 
 SELECT Count(*) AS HowManyVendors
@@ -277,76 +420,151 @@ DELETE FROM Invoices
 --SELECT * FROM Invoices
 WHERE InvoiceID = 49
 
+*BASIC JOINS*
+
 USE AP
 
-SELECT COUNT (*) FROM Vendors --122;
-SELECT COUNT (*) FROM Terms; -- 5
-SELECT COUNT (*) FROM Invoices; --114
-SELECT COUNT (*) FROM InvoiceLineItems; --118
-SELECT COUNT (*) FROM InvoiceArchive; --0
-SELECT COUNT (*) FROM GLAccounts; --75
-SELECT COUNT (*) FROM ContactUpdates; -- 8
+PQFR
 
-SELECT COUNT (*) FROM Vendors
-WHERE VendorState = 'CA' --75
+	-- Inner join does a 1-1 match where the data matches. only records in both 
 
-SELECT COUNT (*) FROM Vendors
-WHERE NOT VendorState = 'CA' --47
+SELECT VendorName, DefaultTermsID
+FROM Vendors
+    /* INNER JOIN
+		terms 
+			ON - use the keyword ON*/
+
+SELECT *
+FROM Terms 
+
+SELECT VendorName, TermsDescription
+FROM Vendors
+	INNER JOIN Terms -- INNER JOINS can be written as JOIN
+			ON DefaultTermsID = TermsID
 
 
-SELECT TOP 10 VendorID FROM Vendors
 
-SELECT InvoiceNumber, InvoiceDate invoiceTotal
-FROM Invoices
-WHERE InvoiceDate BETWEEN '2023-01-01' AND '2023-03-31'
-ORDER BY InvoiceDate
+SELECT Vendors.VendorID, Invoices.VendorID --Joins you should specify what table you want the information from 
+From Vendors INNER JOIN Invoices ON Vendors.VendorID = INvoices.VendorID
+WHERE InvoiceTotal > 100 
 
---SELECT InvoiceID, InvoiceTotal, InvoiceTotal * .5 AS DiscountTotal FROM Invoices
+SELECT Vendors.VendorID, Invoices.VendorID, VendorName, Invoices.InvoiceID, InvoiceTotal, InvoiceDate -- The more Joins the more you will have to use the format table.table_column
+FROM Vendors 
+	INNER JOIN Invoices ON Vendors.VendorID = Invoices.VendorID
+		INNER JOIN InvoiceLineItems ON Invoices.InvoiceID = InvoiceLineItems.InvoiceID
 
-SELECT VendorName, VendorContactFName + ' ' + VendorContactLName AS Contacts FROM Vendors;
-SELECT VendorNAme, CONCAT ( VendorContactFName, ' ', VendorContactLName ) AS Contacts From Vendors;
+SELECT Vendors.VendorID, Inv.VendorID, VendorName, Inv.InvoiceID, InvoiceTotal, InvoiceDate -- The more Joins the more you will have to use the format table.table_column
+FROM Vendors 
+	INNER JOIN Invoices AS inv ON Vendors.VendorID = Inv.VendorID
+		INNER JOIN InvoiceLineItems AS il ON Inv.InvoiceID = il.InvoiceID
 
---SELECT GETDATE()
+-- INNER returns 114
+
+SELECT Vendors.VendorID, Invoices.VendorID, VendorName, InvoiceID, InvoiceTotal, InvoiceDate
+FROM Vendors LEFT OUTER JOIN Invoices ON Vendors.VendorID = Invoices.VendorID
+
+-- LEFT returns 202, must have vendors (122) with no orders 
+
+
+	-- Outer joins all records from one table and only matching records from 2nd table
+
+SELECT VendorName, TermsDescription
+FROM Vendors
+	LEFT OUTER JOIN Terms -- LEFT OUTER JOIN can be written as LEFT JOIN
+			ON DefaultTermsID = TermsID
+
+SELECT Vendors.VendorID, Invoices.VendorID
+From Vendors LEFT JOIN Invoices ON Vendors.VendorID = INvoices.VendorID
+WHERE Invoices.VendorID IS NULL
+
+
+SELECT Vendors.VendorName, Terms.TermsDescription, Invoices.InvoiceID
+FROM   Invoices INNER JOIN
+             Terms ON Invoices.TermsID = Terms.TermsID INNER JOIN
+             Vendors ON Invoices.VendorID = Vendors.VendorID AND Terms.TermsID = Vendors.DefaultTermsID
+
+SELECT Vendors.VendorName, Terms.TermsDescription, Invoices.InvoiceID
+FROM Vendors INNER JOIN
+		Terms ON Vendors.DefaultTermsID = terms.TermsID INNER JOIN
+		Invoices ON vendors.VendorID = Invoices.VendorID AND Terms.TermsID = Vendors.DefaultTermsID 
+
+--CROSS JOIN 
+
+SELECT VendorName, TermsDescription
+FROM Vendors CROSS JOIN Terms
+ORDER BY VendorName
+
+SELECT *
+FROM Vendors
+
+SELECT V1.VendorContactFName, V2.VendorContactLName
+FROM Vendors AS V1
+  CROSS JOIN Vendors AS V2 -- to cross reference columns in the same table you have to create an alias 
+	
+		
+
+SELECT * 
+FROM Vendors
+ORDER BY VendorState OFFSET 5 ROWS FETCH FIRST 5 ROW ONLY 
+
+--Selects even numbers of rows
+SELECT *
+FROM Station
+WHERE ID % 2 = 0
+
+or 
+
+With numbered_rows AS ( Select *, ROW_NUMBER( ) OVER (ORDER BY ID) AS row_num FROM Station) 
+SELECT *
+FROM numbered_rows
+WHERE row_num % 2 = 0
+
+*FIRST HOMEWORK*
+
+USE AP
 
 SELECT DATEDIFF( DAY, GETDATE(), InvoiceDate ) FROM Invoices;
 
-SELECT 'Hello' + ' ' + VendorContactFName From Vendors 
+SELECT * FROM Invoices
 
-SELECT VendorAddress1, VendorCity, VendorState FROM Vendors
+SELECT AVG(InvoiceTotal)AS AverageInvoiceTotal 
+FROM Invoices
+WHERE YEAR(InvoiceDate) = 2023;
 
-SELECT CONCAT (VendorAddress1, ', ' , VendorCity, ' ', VendorState) AS Addresses FROM Vendors;
+SELECT * FROM GLAccounts
+
+SELECT * FROM GLAccounts
+WHERE (AccountDescription = 'Freight');
+
+SELECT InvoiceID, InvoiceLineItemDescription, InvoiceLineItemAmount 
+FROM InvoiceLineItems
+WHERE (AccountNo = 553 AND InvoiceLineItemDescription = 'Freight');
+
+SELECT * FROM GLAccounts
+ORDER BY 'AccountDescription';
+
+SELECT * 
+FROM Invoices
+ORDER BY InvoiceDate DESC;
 
 SELECT * FROM Vendors
-WHERE (VendorState = 'OH' OR VendorState = 'CA') AND DefaultTermsID = 2
 
-SELECT VendorContactLName, VendorContactFName,
-LEFT( VendorContactLName, 1) + LEFT( VendorContactFName, 1)AS Inital 
-FROM Vendors
+SELECT VendorContactFName + ' ' + VendorContactLName + ' ' + SUBSTRING(VendorPhone, 2,3)  FROM Vendors
 
-SELECT VendorName,
-       VendorPhone, 
-       SUBSTRING(VendorPhone, 2, 3) AS Area_code
-From Vendors
-
-SELECT VendorName, RIGHT ( LEFT( VendorName, 3 ) ,1), 
-       REVERSE ( VendorName ) 
-From Vendors
-
-SELECT DISTINCT  VendorState, VendorContactLName 
-FROM Vendors 
-ORDER BY VendorContactLName DESC
+SELECT DISTINCT VendorState From Vendors
 
 SELECT VendorState, COUNT(*)
 FROM Vendors
 GROUP BY VendorState
 ORDER BY VendorState ASC 
 
-
-SELECT DISTINCT DefaultTermsID FROM Vendors
-
-SELECT TOP 10 WITH TIES * 
+SELECT VendorID, VendorName 
 FROM Vendors
-ORDER BY VendorState, VendorCIty
+WHERE VendorName LIKE '% DATA %'
+
+SELECT  AVG(InvoiceTotal)
+FROM Invoices
+WHERE (InvoiceID = 1 OR 2 OR 3) 
 
 SELECT * 
 FROM Vendors
